@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kết nối TikTok</title>
+<style>
+  body{max-width:620px;margin:0 auto;padding:48px 20px;font:16px/1.7 system-ui,-apple-system,"Segoe UI",sans-serif;color:#1c1e21;background:#f0f2f5}
+  .card{background:#fff;border:1px solid #d8dbdf;border-radius:12px;padding:26px}
+  h1{font-size:21px;margin:0 0 6px}
+  p{margin:0 0 14px}
+  .muted{color:#65676b;font-size:14px}
+  code{background:#f0f2f5;padding:2px 6px;border-radius:5px;font-size:13px}
+  pre{background:#1b2027;color:#cfd8e3;border-radius:8px;padding:14px;font:13px/1.6 Consolas,monospace;white-space:pre-wrap;word-break:break-all;margin:0 0 12px}
+  button,a.btn{display:inline-block;padding:11px 18px;font-size:15px;font-weight:650;border-radius:8px;border:1px solid #d8dbdf;background:#fff;color:#1c1e21;cursor:pointer;text-decoration:none;margin-right:8px}
+  a.btn.primary,button.primary{background:#1877f2;border-color:#1877f2;color:#fff}
+  .err{border-color:#c0392b;background:rgba(192,57,43,.08)}
+  .ok{color:#1a7f37;font-weight:650}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <h1 id="title">Đang xử lý…</h1>
+  <div id="body"></div>
+</div>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var code = q.get('code');
+  var err = q.get('error') || q.get('error_description');
+  var title = document.getElementById('title');
+  var body = document.getElementById('body');
+
+  // Cổng mặc định của tool; đổi ở đây nếu bạn chạy UI_PORT khác.
+  var PORT = q.get('port') || '5678';
+  var local = 'http://localhost:' + PORT + '/tiktok/callback' + location.search;
+
+  if (err || !code) {
+    document.getElementById('card').className = 'card err';
+    title.textContent = 'Cấp quyền không thành công';
+    body.innerHTML = '<p>' + (err ? String(err).replace(/[<>&]/g, '') : 'TikTok không trả về mã code.') +
+      '</p><p class="muted">Quay lại tool và bấm kết nối lần nữa.</p>';
+    return;
+  }
+
+  title.textContent = 'Đã nhận mã từ TikTok';
+  body.innerHTML =
+    '<p>Đang chuyển mã về tool đang chạy trên máy bạn…</p>' +
+    '<pre id="code"></pre>' +
+    '<a class="btn primary" href="' + local + '">Gửi về tool</a>' +
+    '<button id="copy">Copy mã</button>' +
+    '<p class="muted" style="margin-top:16px">Nếu trang không tự chuyển: tool phải đang chạy ' +
+    '(<code>npm run ui</code>). Hoặc copy mã ở trên rồi dán vào ô <b>"dán mã code"</b> ' +
+    'trong khu 🎵 TikTok của giao diện.</p>';
+
+  document.getElementById('code').textContent = code;
+  document.getElementById('copy').onclick = function () {
+    var b = this;
+    navigator.clipboard.writeText(code).then(function () {
+      b.textContent = '✓ Đã copy';
+      b.className = 'ok';
+    });
+  };
+
+  // Chuyển hướng cấp cao nhất từ HTTPS sang http://localhost được trình duyệt cho phép
+  // (khác với fetch — cái đó bị chặn vì mixed content). Chờ 2 giây để người dùng kịp
+  // thấy mã, phòng khi tool chưa chạy thì vẫn còn cái để copy.
+  setTimeout(function () { location.href = local; }, 2000);
+})();
+</script>
+</body>
+</html>
